@@ -2347,6 +2347,16 @@ const ClientDashboard: React.FC = () => {
                 aria-invalid={errors.projectName ? 'true' : 'false'}
                 aria-describedby={errors.projectName ? 'project-name-error' : undefined}
               />
+              <div className="flex justify-between items-center mt-1">
+                <span className={`text-xs sm:text-sm ${
+                  projectData.projectName.length < 7 ? 'text-red-400' : 'text-green-400'
+                }`}>
+                  {projectData.projectName.length}/60 characters
+                </span>
+                <span className="text-xs text-gray-400">
+                  Min: 7, Max: 60
+                </span>
+              </div>
               {errors.projectName && (
                 <p id="project-name-error" className="text-red-400 text-xs sm:text-sm mt-1" role="alert">
                   {errors.projectName}

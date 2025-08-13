@@ -692,7 +692,12 @@ export const validateFreelancerId = async (freelancerId: string) => {
         console.log('Available freelancer IDs:', allFreelancers);
       }
       
-      return { data: null, error: { message: 'Freelancer ID not found' } };
+      return { 
+        data: null, 
+        error: { 
+          message: `Freelancer ID '${freelancerId}' not found. Please check the ID or contact support.` 
+        } 
+      };
     }
 
     return { data, error: null };
@@ -943,20 +948,30 @@ export const isProfileComplete = async (userId: string) => {
   return false;
 }
 
-// Get all freelancer IDs for testing
+// Get all freelancer IDs for dropdown selection
 export const getAllFreelancerIds = async () => {
   try {
+    console.log('Fetching all freelancer IDs...');
+    
     const { data, error } = await supabase
       .from('freelancer_profiles')
-      .select('freelancer_id, full_name, email')
+      .select('freelancer_id, full_name')
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching freelancer IDs:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       return { data: null, error };
     }
 
-    console.log('All freelancer IDs:', data);
+    console.log('Successfully fetched freelancer IDs:', data);
+    console.log('Total freelancers found:', data?.length || 0);
+    
     return { data, error: null };
   } catch (err) {
     console.error('Exception in getAllFreelancerIds:', err);

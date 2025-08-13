@@ -41,13 +41,15 @@ SSBackendOnCursor/
 - **Profile Management**: Complete profile setup with verification
 - **Secure Authentication**: Supabase Auth with Row Level Security (RLS)
 - **Session Management**: Persistent login with refresh tokens
+- **Automatic Profile Creation**: Triggers automatically create user profiles on signup
 
 ### **Project Management System**
 - **Project Creation**: Advanced form with AI-powered deliverables generation
-- **Project Assignment**: Automatic freelancer assignment with validation
+- **Project Assignment**: Dropdown selection of available freelancers (no manual ID entry)
 - **Status Workflow**: Comprehensive project status tracking
 - **Project History**: Complete audit trail of status changes
 - **Project Deletion**: Secure deletion with cascade cleanup
+- **Enhanced Project Names**: 7-60 character limit with real-time validation
 
 ### **Work Product Upload System**
 - **Secure Video Upload**: Upload final video work to `work-products` storage bucket
@@ -138,6 +140,7 @@ SSBackendOnCursor/
 - **Timestamps**: Created/updated tracking
 - **Status Workflows**: Comprehensive state management
 - **Indexes**: Optimized query performance
+- **Automatic Triggers**: User profile creation on signup
 
 ## 🚀 Getting Started
 
@@ -168,7 +171,8 @@ SSBackendOnCursor/
 4. **Database Setup**
    ```sql
    -- Run the complete database setup
-   -- Execute setup_complete_database.sql in Supabase SQL Editor
+   -- Execute setup_complete_database_fixed.sql in Supabase SQL Editor
+   -- This script includes all recent fixes and improvements
    ```
 
 5. **Start Development Server**
@@ -197,11 +201,12 @@ VITE_EMAILJS_TEMPLATE_ID=your_template_id
 
 ### **Client Dashboard**
 - **Project Management**: Create, view, and manage projects
-- **Freelancer Assignment**: Assign projects to verified freelancers
+- **Freelancer Selection**: Dropdown menu of available freelancers (ID + Name only)
 - **Work Product Review**: View and approve uploaded work
 - **Transaction Management**: Fund escrow and release payments
 - **Notifications**: Real-time project status updates
 - **Messaging**: Communicate with assigned freelancers
+- **Enhanced Project Names**: 7-60 character input with real-time validation
 
 ### **Freelancer Dashboard**
 - **Project Overview**: View assigned projects and requirements
@@ -244,7 +249,7 @@ src/
 ```
 
 ### **Key Components**
-- `AddProjectForm.tsx`: Advanced project creation with AI
+- `AddProjectForm.tsx`: Advanced project creation with freelancer dropdown selection
 - `ClientDashboard.tsx`: Client project management interface
 - `FreelancerDashboard.tsx`: Freelancer work management interface
 - `Notifications.tsx`: Real-time notification system
@@ -348,6 +353,14 @@ npm run build
 - Run `test_supabase_connection.sql` to verify connection
 - Review database schema and table structure
 
+**Recent Database Fixes Applied**
+- Fixed missing `client_profiles` table creation
+- Resolved foreign key constraint syntax errors
+- Fixed RLS policy conflicts with dynamic policy cleanup
+- Enhanced user signup triggers with default values
+- Updated project name length limits (7-60 characters)
+- Implemented freelancer dropdown selection system
+
 ### **Debug Information**
 - Check browser console for JavaScript errors
 - Verify Supabase dashboard for database issues
@@ -401,9 +414,9 @@ npm run build
 ## 🎯 Project Status
 
 ### ✅ **Completed Features**
-- ✅ **User Authentication**: Complete signup/login system
-- ✅ **Profile Management**: Comprehensive profile setup
-- ✅ **Project Creation**: Advanced form with AI integration
+- ✅ **User Authentication**: Complete signup/login system with automatic profile creation
+- ✅ **Profile Management**: Comprehensive profile setup with verification
+- ✅ **Project Creation**: Advanced form with AI integration and freelancer dropdown
 - ✅ **Work Product Upload**: Secure video upload system (50MB limit)
 - ✅ **AI Verification**: Automated quality assessment
 - ✅ **Transaction Management**: Complete escrow system
@@ -413,6 +426,9 @@ npm run build
 - ✅ **Mobile Responsive**: Comprehensive mobile optimization
 - ✅ **Error Handling**: Detailed logging and user feedback
 - ✅ **Security Implementation**: RLS policies and access controls
+- ✅ **Enhanced Project Names**: 7-60 character input with validation
+- ✅ **Freelancer Selection**: Dropdown-based freelancer assignment (no manual ID entry)
+- ✅ **Database Stability**: Comprehensive fixes for all major database errors
 
 ### 🚧 **In Development**
 - Enhanced AI video processing
@@ -428,4 +444,33 @@ npm run build
 
 ---
 
+## 🔧 Recent Fixes & Improvements
+
+### **Database Schema Fixes**
+- **Fixed Missing Tables**: Resolved `client_profiles` table creation issues
+- **Constraint Syntax**: Fixed PostgreSQL constraint syntax errors
+- **RLS Policy Conflicts**: Implemented dynamic policy cleanup to prevent conflicts
+- **User Signup Triggers**: Enhanced triggers with default values and error handling
+- **Foreign Key Dependencies**: Proper table creation order and constraint management
+
+### **UI/UX Improvements**
+- **Project Name Length**: Increased from 20 to 60 characters with 7-character minimum
+- **Freelancer Selection**: Replaced manual ID input with dropdown selection
+- **Real-time Validation**: Added character counters and validation feedback
+- **Error Handling**: Improved user feedback for validation errors
+
+### **Security Enhancements**
+- **RLS Policies**: Added policies for freelancer profile viewing during project creation
+- **Data Privacy**: Hidden freelancer emails from client selection dropdowns
+- **Input Validation**: Enhanced frontend and backend validation rules
+
+### **Performance Optimizations**
+- **Database Queries**: Optimized freelancer data fetching
+- **Component Loading**: Improved freelancer dropdown population
+- **Error Recovery**: Better error handling and user experience
+
+---
+
 **Built with ❤️ using React, TypeScript, Supabase, and AI technologies**
+
+**Last Updated**: August 2024 - Database stability fixes and UI improvements completed

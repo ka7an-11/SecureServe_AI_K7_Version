@@ -81,8 +81,8 @@ export const FILE_UPLOAD_CONFIG = {
 // Project validation rules
 export const PROJECT_VALIDATION = {
   projectName: {
-    minLength: 3,
-    maxLength: 20
+    minLength: 7,
+    maxLength: 60
   },
   projectRequirement: {
     maxLength: 200

@@ -57,11 +57,12 @@ const AddProjectForm: React.FC = () => {
   const [showDeliverables, setShowDeliverables] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isValidatingFreelancer, setIsValidatingFreelancer] = useState(false);
-  const [freelancerValidationStatus, setFreelancerValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [currentClientId, setCurrentClientId] = useState<string>('');
   const [createdProjectId, setCreatedProjectId] = useState<string>('');
+         const [availableFreelancers, setAvailableFreelancers] = useState<Array<{freelancer_id: string, full_name: string}>>([]);
+  const [isLoadingFreelancers, setIsLoadingFreelancers] = useState(false);
   
   // AI Chat state
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
@@ -116,6 +117,36 @@ const AddProjectForm: React.FC = () => {
     loadCurrentUser();
   }, []);
 
+  // Load available freelancers
+  useEffect(() => {
+    const loadFreelancers = async () => {
+      console.log('🔄 AddProjectForm: Starting to load freelancers...');
+      setIsLoadingFreelancers(true);
+      try {
+        const { data, error } = await getAllFreelancerIds();
+        if (error) {
+          console.error('❌ AddProjectForm: Error loading freelancers:', error);
+          return;
+        }
+        
+        if (data) {
+          setAvailableFreelancers(data);
+          console.log('✅ AddProjectForm: Successfully loaded freelancers:', data);
+          console.log('📊 AddProjectForm: Total freelancers available:', data.length);
+        } else {
+          console.log('⚠️ AddProjectForm: No freelancer data returned');
+        }
+      } catch (err) {
+        console.error('❌ AddProjectForm: Exception loading freelancers:', err);
+      } finally {
+        setIsLoadingFreelancers(false);
+        console.log('🔄 AddProjectForm: Finished loading freelancers');
+      }
+    };
+
+    loadFreelancers();
+  }, []);
+
   // Get tomorrow's date in YYYY-MM-DD format
   const getTomorrowDate = () => {
     const tomorrow = new Date();
@@ -127,13 +158,12 @@ const AddProjectForm: React.FC = () => {
   const validateField = (name: keyof FormErrors, value: string) => {
     switch (name) {
       case 'projectName':
-        return value.trim().length < 3 ? 'Project name must be at least 3 characters long' : '';
+        return value.trim().length < 7 ? 'Project name must be at least 7 characters long' : '';
       case 'projectRequirement':
         return value.trim().length < 10 ? 'Project requirement must be at least 10 characters long' : '';
       case 'freelancerId':
-        const freelancerIdRegex = /^F\d{9}$/;
-        if (!value.trim()) return 'Freelancer ID is required';
-        return !freelancerIdRegex.test(value) ? 'Freelancer ID must be in format F123456789' : '';
+        if (!value.trim()) return 'Please select a freelancer';
+        return '';
       case 'completionDate':
         if (!value) return 'Completion date is required';
         const selectedDate = new Date(value);
@@ -168,59 +198,7 @@ const AddProjectForm: React.FC = () => {
     setErrors(prev => ({ ...prev, [field]: error }));
   };
 
-  // Format Freelancer ID input
-  const handleFreelancerIdChange = (value: string) => {
-    // Remove any non-digit characters except F at the beginning
-    let formatted = value.replace(/[^F\d]/g, '');
-    
-    // Ensure it starts with F
-    if (!formatted.startsWith('F')) {
-      formatted = 'F' + formatted.replace(/F/g, '');
-    }
-    
-    // Limit to F + 9 digits
-    if (formatted.length > 10) {
-      formatted = formatted.substring(0, 10);
-    }
-    
-    handleInputChange('freelancerId', formatted);
-  };
-
-  // Validate freelancer ID exists in database
-  const validateFreelancerIdExists = async (freelancerId: string) => {
-    if (!freelancerId || freelancerId.length !== 10) return false;
-    
-    setIsValidatingFreelancer(true);
-    setFreelancerValidationStatus('validating');
-    try {
-      console.log('Validating freelancer ID in form:', freelancerId);
-      const { data, error } = await validateFreelancerId(freelancerId);
-      setIsValidatingFreelancer(false);
-      setFreelancerValidationStatus('idle'); // Reset status after validation
-      
-      console.log('Validation result:', { data, error });
-      
-      // Check if there's an error or no data returned
-      if (error || !data) {
-        console.log('Freelancer ID not found, setting error');
-        const errorMessage = error?.message || 'Freelancer ID not found in database';
-        setErrors(prev => ({ ...prev, freelancerId: errorMessage }));
-        setFreelancerValidationStatus('error');
-        return false;
-      }
-      
-      console.log('Freelancer ID validated successfully');
-      setErrors(prev => ({ ...prev, freelancerId: '' }));
-      setFreelancerValidationStatus('success');
-      return true;
-    } catch (err) {
-      console.error('Exception in validateFreelancerIdExists:', err);
-      setIsValidatingFreelancer(false);
-      setFreelancerValidationStatus('error');
-      setErrors(prev => ({ ...prev, freelancerId: 'Error validating freelancer ID' }));
-      return false;
-    }
-  };
+  // Freelancer selection is now handled by dropdown, no need for manual validation
 
   // File upload handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -879,7 +857,7 @@ const AddProjectForm: React.FC = () => {
                   onBlur={(e) => handleInputBlur('projectName', e.target.value)}
                   placeholder="Enter your project name"
                   required
-                  maxLength={20}
+                  maxLength={60}
                   aria-invalid={errors.projectName ? 'true' : 'false'}
                   aria-describedby={errors.projectName ? 'project-name-error' : undefined}
                   className={`w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border-2 rounded-lg focus:outline-none transition-colors bg-gray-700 text-white placeholder-gray-400 text-sm sm:text-base ${
@@ -892,6 +870,16 @@ const AddProjectForm: React.FC = () => {
                   <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
                 </div>
               </div>
+              <div className="flex justify-between items-center mt-1">
+                <span className={`text-xs sm:text-sm ${
+                  formData.projectName.length < 7 ? 'text-red-400' : 'text-green-400'
+                }`}>
+                  {formData.projectName.length}/60 characters
+                </span>
+                <span className="text-xs text-gray-400">
+                  Min: 7, Max: 60
+                </span>
+              </div>
               {errors.projectName && (
                 <p id="project-name-error" className="text-red-400 text-xs sm:text-sm mt-1 flex items-center" role="alert">
                   <AlertCircle className="h-4 w-4 mr-1" />
@@ -900,53 +888,52 @@ const AddProjectForm: React.FC = () => {
               )}
             </div>
 
-            {/* Freelancer ID */}
+            {/* Freelancer Selection */}
             <div>
               <label htmlFor="freelancer-id" className="block text-gray-300 text-sm font-semibold mb-2">
-                Freelancer ID *
+                Select Freelancer *
               </label>
               <div className="relative">
-                <input
+                <select
                   id="freelancer-id"
                   name="freelancerId"
-                  type="text"
                   value={formData.freelancerId}
-                  onChange={(e) => handleFreelancerIdChange(e.target.value)}
-                  onBlur={(e) => {
-                    handleInputBlur('freelancerId', e.target.value);
-                    if (e.target.value.length === 10) {
-                      validateFreelancerIdExists(e.target.value);
+                  onChange={(e) => {
+                    console.log('🔄 AddProjectForm: Freelancer selected:', e.target.value);
+                    handleInputChange('freelancerId', e.target.value);
+                    // Clear any previous validation errors
+                    if (errors.freelancerId) {
+                      setErrors(prev => ({ ...prev, freelancerId: '' }));
                     }
                   }}
-                  placeholder="F123456789"
                   required
-                  maxLength={10}
                   aria-invalid={errors.freelancerId ? 'true' : 'false'}
                   aria-describedby={`freelancer-id-help ${errors.freelancerId ? 'freelancer-id-error' : ''}`.trim()}
-                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border-2 rounded-lg focus:outline-none transition-colors bg-gray-700 text-white placeholder-gray-400 text-sm sm:text-base ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 border-2 rounded-lg focus:outline-none transition-colors bg-gray-700 text-white text-sm sm:text-base appearance-none cursor-pointer ${
                     errors.freelancerId 
                       ? 'border-red-500 focus:border-red-400' 
-                      : freelancerValidationStatus === 'success'
-                      ? 'border-green-500 focus:border-green-400'
-                      : freelancerValidationStatus === 'error'
-                      ? 'border-red-500 focus:border-red-400'
                       : 'border-gray-600 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50'
                   }`}
-                />
-                <div className="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center">
-                  {isValidatingFreelancer ? (
-                    <Loader className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400 animate-spin" />
-                  ) : freelancerValidationStatus === 'success' ? (
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
-                  ) : freelancerValidationStatus === 'error' ? (
-                    <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                >
+                  <option value="">Select a freelancer...</option>
+                  {isLoadingFreelancers ? (
+                    <option value="" disabled>Loading freelancers...</option>
+                  ) : availableFreelancers.length === 0 ? (
+                    <option value="" disabled>No freelancers available</option>
                   ) : (
-                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
+                                 availableFreelancers.map((freelancer) => (
+               <option key={freelancer.freelancer_id} value={freelancer.freelancer_id}>
+                 {freelancer.freelancer_id} - {freelancer.full_name}
+               </option>
+             ))
                   )}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
                 </div>
               </div>
               <p id="freelancer-id-help" className="text-gray-400 text-xs sm:text-sm mt-1">
-                Format: F followed by 9 digits (e.g., F123456789)
+                Choose from available freelancers in the system
               </p>
               {errors.freelancerId && (
                 <p id="freelancer-id-error" className="text-red-400 text-xs sm:text-sm mt-1 flex items-center" role="alert">
@@ -954,8 +941,6 @@ const AddProjectForm: React.FC = () => {
                   {errors.freelancerId}
                 </p>
               )}
-              
-
             </div>
           </div>
 
